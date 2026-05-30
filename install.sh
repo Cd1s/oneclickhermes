@@ -343,6 +343,7 @@ else:
 if truthy(os.environ.get("HERMES_FULL_PERMISSIONS")):
     updates["HERMES_YOLO_MODE"] = "1"
     updates["HERMES_ACCEPT_HOOKS"] = "1"
+    updates["HERMES_WEBUI_SKIP_ONBOARDING"] = "1"
 
 if truthy(os.environ.get("ENABLE_API_SERVER")):
     updates["API_SERVER_ENABLED"] = "true"
@@ -588,6 +589,27 @@ HERMES_WEBUI_BOT_NAME=Hermes
 EOF
   chmod 600 /etc/hermes-webui.env
 
+  "$HERMES_PYTHON" - <<'PY'
+import json
+import os
+from pathlib import Path
+
+state_dir = Path(os.environ["HERMES_HOME"]) / "webui"
+settings_path = state_dir / "settings.json"
+state_dir.mkdir(parents=True, exist_ok=True)
+settings = {}
+if settings_path.exists():
+    try:
+        parsed = json.loads(settings_path.read_text(encoding="utf-8"))
+        if isinstance(parsed, dict):
+            settings = parsed
+    except Exception:
+        settings = {}
+settings["onboarding_completed"] = True
+settings_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+settings_path.chmod(0o600)
+PY
+
   cat > /usr/local/bin/hermes-webui-run <<'EOF'
 #!/usr/bin/env bash
 set -Eeuo pipefail
@@ -703,9 +725,10 @@ User=root
 WorkingDirectory=$TERMINAL_CWD
 Environment=HOME=/root
 Environment=HERMES_HOME=$HERMES_HOME
+Environment=HERMES_YOLO_MODE=1
 Environment=HERMES_ACCEPT_HOOKS=1
 Environment=PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=$HERMES_BIN gateway run --replace --accept-hooks
+ExecStart=$HERMES_BIN gateway run --replace --accept-hooks --yolo
 Restart=always
 RestartSec=5
 
@@ -727,7 +750,7 @@ pidfile="/run/hermes-gateway.pid"
 command_background="yes"
 output_log="$HERMES_HOME/logs/gateway.log"
 error_log="$HERMES_HOME/logs/gateway.err"
-start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env HERMES_ACCEPT_HOOKS=1 --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env HERMES_YOLO_MODE=1 --env HERMES_ACCEPT_HOOKS=1 --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 depend() {
   need net
 }

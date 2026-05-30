@@ -75,7 +75,7 @@ bash install.sh
 | `MODEL_API_KEY` | required unless reusable or `MODEL_NO_AUTH=1` | Model API key |
 | `MODEL_DEFAULT` | required | Default model ID |
 | `MODEL_SPECS` | required | `model:context_length:max_output_tokens`, comma-separated |
-| `HERMES_FULL_PERMISSIONS` | `1` | Disable approval prompts and enable broad tool access |
+| `HERMES_FULL_PERMISSIONS` | `1` | Enable YOLO mode, auto-accept hooks, allow all commands, auto-approve subagents, and skip WebUI onboarding |
 | `ENABLE_API_SERVER` | `0` | Optional, loopback-only if enabled |
 | `RUN_CHAT_TEST` | `0` | Run `hermes chat -q` smoke test after install |
 
@@ -90,3 +90,7 @@ before modifying them.
 On reruns, if `MODEL_API_KEY` is unset and `~/.hermes/.env` already contains the
 selected `MODEL_KEY_ENV`, the installer reuses that existing key without
 printing it.
+By default, `HERMES_FULL_PERMISSIONS=1` writes `approvals.mode: off`,
+`command_allowlist: ['*']`, `hooks_auto_accept: true`,
+`delegation.subagent_auto_approve: true`, `HERMES_YOLO_MODE=1`,
+`HERMES_ACCEPT_HOOKS=1`, and marks WebUI onboarding completed.
