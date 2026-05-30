@@ -700,6 +700,50 @@ wait_for_webui() {
   die "WebUI did not become healthy; check service logs"
 }
 
+verify_webui_auth() {
+  if ! is_true "$WEBUI_AUTH"; then
+    return 0
+  fi
+
+  local host="$WEBUI_HOST"
+  if [ "$host" = "0.0.0.0" ] || [ "$host" = "::" ]; then
+    host="127.0.0.1"
+  fi
+  local url="http://${host}:${WEBUI_PORT}/api/auth/login"
+  log "Verifying WebUI password login at $url"
+
+  WEBUI_LOGIN_URL="$url" WEBUI_LOGIN_PASSWORD="$WEBUI_PASSWORD" python3 - <<'PY'
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+url = os.environ["WEBUI_LOGIN_URL"]
+password = os.environ["WEBUI_LOGIN_PASSWORD"]
+payload = json.dumps({"password": password}).encode()
+request = urllib.request.Request(
+    url,
+    data=payload,
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+try:
+    with urllib.request.urlopen(request, timeout=10) as response:
+        body = response.read(4096).decode("utf-8", errors="replace")
+        data = json.loads(body)
+        if response.status != 200 or data.get("ok") is not True:
+            raise SystemExit(f"login returned HTTP {response.status}: {body[:200]}")
+        if not response.headers.get("Set-Cookie"):
+            raise SystemExit("login succeeded but did not return a session cookie")
+except urllib.error.HTTPError as exc:
+    raise SystemExit(f"login returned HTTP {exc.code}: {exc.read(200).decode(errors='replace')}")
+except Exception as exc:
+    raise SystemExit(f"login check failed: {exc}")
+PY
+  log "WebUI password login OK"
+}
+
 verify_install() {
   log "Verifying Hermes config"
   "$HERMES_BIN" config check
@@ -725,6 +769,7 @@ verify_install() {
   fi
 
   wait_for_webui
+  verify_webui_auth
 }
 
 print_summary() {
