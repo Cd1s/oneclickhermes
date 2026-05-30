@@ -72,7 +72,7 @@ bash install.sh
 | `MODEL_BASE_URL` | required | OpenAI-compatible base URL, usually ending in `/v1` |
 | `MODEL_API_MODE` | `codex_responses` | `chat_completions`, `codex_responses`, or `anthropic_messages` |
 | `MODEL_KEY_ENV` | `OPENAI_API_KEY` | Env var name stored in `.env` |
-| `MODEL_API_KEY` | required unless `MODEL_NO_AUTH=1` | Model API key |
+| `MODEL_API_KEY` | required unless reusable or `MODEL_NO_AUTH=1` | Model API key |
 | `MODEL_DEFAULT` | required | Default model ID |
 | `MODEL_SPECS` | required | `model:context_length:max_output_tokens`, comma-separated |
 | `HERMES_FULL_PERMISSIONS` | `1` | Disable approval prompts and enable broad tool access |
@@ -87,3 +87,6 @@ so this installer does not enable Hermes API Server. If you opt into
 
 The installer backs up existing `~/.hermes/.env` and `~/.hermes/config.yaml`
 before modifying them.
+On reruns, if `MODEL_API_KEY` is unset and `~/.hermes/.env` already contains the
+selected `MODEL_KEY_ENV`, the installer reuses that existing key without
+printing it.

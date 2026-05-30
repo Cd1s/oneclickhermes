@@ -183,6 +183,7 @@ normalize_inputs() {
   MODEL_KEY_ENV="${MODEL_KEY_ENV:-OPENAI_API_KEY}"
   MODEL_API_KEY="${MODEL_API_KEY:-${OPENAI_API_KEY:-}}"
   MODEL_NO_AUTH="${MODEL_NO_AUTH:-0}"
+  REUSED_MODEL_API_KEY=0
 
   ENABLE_API_SERVER="${ENABLE_API_SERVER:-0}"
   API_SERVER_HOST="${API_SERVER_HOST:-127.0.0.1}"
@@ -200,6 +201,13 @@ normalize_inputs() {
 
   if [ -z "$MODEL_SPECS" ]; then
     MODEL_SPECS="${MODEL_DEFAULT}:131072:8192"
+  fi
+
+  if ! is_true "$MODEL_NO_AUTH" && [ -z "$MODEL_API_KEY" ]; then
+    MODEL_API_KEY="$(read_env_value "$HERMES_HOME/.env" "$MODEL_KEY_ENV" || true)"
+    if [ -n "$MODEL_API_KEY" ]; then
+      REUSED_MODEL_API_KEY=1
+    fi
   fi
 
   if ! is_true "$MODEL_NO_AUTH"; then
@@ -850,6 +858,10 @@ Changed files:
   /etc/hermes-webui.env
   /usr/local/bin/hermes-webui-run
 EOF
+
+  if is_true "$REUSED_MODEL_API_KEY"; then
+    printf '\nModel API key: reused existing %s from %s/.env\n' "$MODEL_KEY_ENV" "$HERMES_HOME"
+  fi
 
   if is_true "$GENERATED_WEBUI_PASSWORD"; then
     printf '\nGenerated WebUI password:\n%s\n' "$WEBUI_PASSWORD"
