@@ -62,7 +62,7 @@ bash install.sh
 | `TELEGRAM_BOT_TOKEN` | empty | Telegram bot token |
 | `TELEGRAM_ALLOWED_USERS` | empty | Comma-separated Telegram user IDs |
 | `WEBUI_REPO` | `https://github.com/nesquena/hermes-webui.git` | WebUI repository |
-| `WEBUI_REF` | `master` | WebUI branch/ref |
+| `WEBUI_REF` | `main` | WebUI branch/ref |
 | `WEBUI_HOST` | `127.0.0.1` | WebUI bind address |
 | `WEBUI_PORT` | `8787` | WebUI bind port |
 | `WEBUI_PASSWORD` | generated | WebUI password |
