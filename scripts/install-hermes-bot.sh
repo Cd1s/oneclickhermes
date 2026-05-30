@@ -443,9 +443,16 @@ cfg["custom_providers"] = custom
 model_cfg = cfg.get("model") if isinstance(cfg.get("model"), dict) else {}
 model_cfg["provider"] = provider
 model_cfg["default"] = default_model
+model_cfg["base_url"] = base_url
 model_cfg["api_mode"] = api_mode
 model_cfg["max_tokens"] = int(models[default_model]["max_output_tokens"])
 model_cfg["context_length"] = int(models[default_model]["context_length"])
+if truthy(os.environ.get("MODEL_NO_AUTH")):
+    model_cfg["api_key"] = ""
+    model_cfg.pop("key_env", None)
+else:
+    model_cfg["key_env"] = os.environ["MODEL_KEY_ENV"].strip()
+    model_cfg.pop("api_key", None)
 cfg["model"] = model_cfg
 
 terminal_cfg = cfg.get("terminal") if isinstance(cfg.get("terminal"), dict) else {}
