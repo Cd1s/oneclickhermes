@@ -119,6 +119,35 @@ PY
   fi
 }
 
+read_env_value() {
+  local file="$1"
+  local wanted="$2"
+  local line key value
+
+  [ -f "$file" ] || return 1
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    case "$line" in
+      ""|\#*) continue ;;
+      *=*) ;;
+      *) continue ;;
+    esac
+    key="${line%%=*}"
+    key="${key#export }"
+    key="${key//[[:space:]]/}"
+    [ "$key" = "$wanted" ] || continue
+    value="${line#*=}"
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    printf '%s' "$value"
+    return 0
+  done < "$file"
+  return 1
+}
+
 normalize_inputs() {
   HERMES_HOME="${HERMES_HOME:-/root/.hermes}"
   HERMES_AGENT_REF="${HERMES_AGENT_REF:-main}"
@@ -138,8 +167,13 @@ normalize_inputs() {
   WEBUI_PORT="${WEBUI_PORT:-8787}"
   WEBUI_SERVICE_NAME="${WEBUI_SERVICE_NAME:-hermes-webui}"
   WEBUI_AUTH="${WEBUI_AUTH:-1}"
+  WEBUI_PASSWORD_WAS_SET=0
+  if [ "${WEBUI_PASSWORD+x}" = x ]; then
+    WEBUI_PASSWORD_WAS_SET=1
+  fi
   WEBUI_PASSWORD="${WEBUI_PASSWORD:-}"
   GENERATED_WEBUI_PASSWORD=0
+  REUSED_WEBUI_PASSWORD=0
 
   MODEL_PROVIDER="${MODEL_PROVIDER:-localopenai}"
   MODEL_BASE_URL="${MODEL_BASE_URL:-}"
@@ -175,6 +209,13 @@ normalize_inputs() {
   if is_true "$DEPLOY_TG"; then
     prompt_var TELEGRAM_BOT_TOKEN "Telegram bot token" 1
     prompt_var TELEGRAM_ALLOWED_USERS "Telegram allowed user ids, comma-separated"
+  fi
+
+  if is_true "$WEBUI_AUTH" && [ -z "$WEBUI_PASSWORD" ] && [ "$WEBUI_PASSWORD_WAS_SET" -eq 0 ]; then
+    WEBUI_PASSWORD="$(read_env_value "$HERMES_HOME/.env" HERMES_WEBUI_PASSWORD || true)"
+    if [ -n "$WEBUI_PASSWORD" ]; then
+      REUSED_WEBUI_PASSWORD=1
+    fi
   fi
 
   if is_true "$WEBUI_AUTH" && [ -z "$WEBUI_PASSWORD" ]; then
@@ -805,6 +846,8 @@ EOF
 
   if is_true "$GENERATED_WEBUI_PASSWORD"; then
     printf '\nGenerated WebUI password:\n%s\n' "$WEBUI_PASSWORD"
+  elif is_true "$REUSED_WEBUI_PASSWORD"; then
+    printf '\nWebUI password: reused existing HERMES_WEBUI_PASSWORD from %s/.env\n' "$HERMES_HOME"
   fi
 }
 

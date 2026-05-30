@@ -21,7 +21,6 @@ NONINTERACTIVE=1 \
 DEPLOY_TG=0 \
 WEBUI_HOST='0.0.0.0' \
 WEBUI_PORT='8080' \
-WEBUI_PASSWORD='' \
 MODEL_PROVIDER='localopenai' \
 MODEL_BASE_URL='https://ai.example.com/v1' \
 MODEL_API_MODE='codex_responses' \
@@ -32,8 +31,11 @@ MODEL_SPECS='gpt-5.5:400000:32000' \
 bash install.sh
 ```
 
-If `WEBUI_PASSWORD` is empty, a random password is generated and printed once at
-the end of the install.
+If `WEBUI_PASSWORD` is unset, the installer reuses an existing
+`HERMES_WEBUI_PASSWORD` from `~/.hermes/.env`; otherwise it generates a random
+password and prints it once at the end of the install. Set `WEBUI_PASSWORD=''`
+explicitly to rotate to a new generated password, or set `WEBUI_PASSWORD='...'`
+to choose a fixed password.
 
 ## Telegram
 
