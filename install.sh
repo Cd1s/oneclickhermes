@@ -103,12 +103,19 @@ prompt_var() {
 }
 
 random_secret() {
-  if command -v openssl >/dev/null 2>&1; then
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(36), end="")
+PY
+  elif command -v openssl >/dev/null 2>&1; then
     openssl rand -base64 36 | tr -d '\n'
   else
+    local password
     set +o pipefail
-    tr -dc 'A-Za-z0-9' </dev/urandom | head -c 36
+    password="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 36)"
     set -o pipefail
+    printf '%s' "$password"
   fi
 }
 
