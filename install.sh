@@ -96,7 +96,11 @@ prompt_var() {
 }
 
 random_secret() {
-  openssl rand -base64 36 | tr -d '\n'
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -base64 36 | tr -d '\n'
+  else
+    tr -dc 'A-Za-z0-9' </dev/urandom | head -c 36
+  fi
 }
 
 normalize_inputs() {
