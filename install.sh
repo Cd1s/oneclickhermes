@@ -343,6 +343,7 @@ else:
 if truthy(os.environ.get("HERMES_FULL_PERMISSIONS")):
     updates["HERMES_YOLO_MODE"] = "1"
     updates["HERMES_ACCEPT_HOOKS"] = "1"
+    updates["HERMES_TUI_NO_CONFIRM"] = "1"
     updates["HERMES_WEBUI_SKIP_ONBOARDING"] = "1"
 
 if truthy(os.environ.get("ENABLE_API_SERVER")):
@@ -543,6 +544,7 @@ if truthy(os.environ.get("HERMES_FULL_PERMISSIONS")):
 
     browser = cfg.get("browser") if isinstance(cfg.get("browser"), dict) else {}
     browser["allow_private_urls"] = True
+    browser["dialog_policy"] = "auto_accept"
     cfg["browser"] = browser
 
     delegation = cfg.get("delegation") if isinstance(cfg.get("delegation"), dict) else {}
@@ -647,6 +649,9 @@ export HERMES_HOME="${HERMES_HOME:-/root/.hermes}"
 export HERMES_WEBUI_HOST="${HERMES_WEBUI_HOST:-127.0.0.1}"
 export HERMES_WEBUI_PORT="${HERMES_WEBUI_PORT:-8787}"
 export HERMES_WEBUI_PRESERVE_ENV=1
+export HERMES_YOLO_MODE="${HERMES_YOLO_MODE:-1}"
+export HERMES_ACCEPT_HOOKS="${HERMES_ACCEPT_HOOKS:-1}"
+export HERMES_TUI_NO_CONFIRM="${HERMES_TUI_NO_CONFIRM:-1}"
 export PATH="/usr/local/bin:/root/.local/bin:${HERMES_HOME}/node/bin:${PATH}"
 
 cd "__WEBUI_DIR__"
@@ -672,6 +677,9 @@ User=root
 WorkingDirectory=$WEBUI_DIR
 Environment=HOME=/root
 Environment=HERMES_HOME=$HERMES_HOME
+Environment=HERMES_YOLO_MODE=1
+Environment=HERMES_ACCEPT_HOOKS=1
+Environment=HERMES_TUI_NO_CONFIRM=1
 ExecStart=/usr/local/bin/hermes-webui-run
 Restart=always
 RestartSec=5
@@ -693,7 +701,7 @@ pidfile="/run/${WEBUI_SERVICE_NAME}.pid"
 command_background="yes"
 output_log="$HERMES_HOME/logs/webui.log"
 error_log="$HERMES_HOME/logs/webui.err"
-start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env HERMES_YOLO_MODE=1 --env HERMES_ACCEPT_HOOKS=1 --env HERMES_TUI_NO_CONFIRM=1 --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 depend() {
   need net
 }
@@ -727,6 +735,7 @@ Environment=HOME=/root
 Environment=HERMES_HOME=$HERMES_HOME
 Environment=HERMES_YOLO_MODE=1
 Environment=HERMES_ACCEPT_HOOKS=1
+Environment=HERMES_TUI_NO_CONFIRM=1
 Environment=PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=$HERMES_BIN gateway run --replace --accept-hooks --yolo
 Restart=always
@@ -743,14 +752,14 @@ EOF
 name="hermes-gateway"
 description="Hermes Gateway"
 command="$HERMES_BIN"
-command_args="gateway run --replace --accept-hooks"
+command_args="gateway run --replace --accept-hooks --yolo"
 command_user="root"
 directory="$TERMINAL_CWD"
 pidfile="/run/hermes-gateway.pid"
 command_background="yes"
 output_log="$HERMES_HOME/logs/gateway.log"
 error_log="$HERMES_HOME/logs/gateway.err"
-start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env HERMES_YOLO_MODE=1 --env HERMES_ACCEPT_HOOKS=1 --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+start_stop_daemon_args="--make-pidfile --env HOME=/root --env HERMES_HOME=$HERMES_HOME --env HERMES_YOLO_MODE=1 --env HERMES_ACCEPT_HOOKS=1 --env HERMES_TUI_NO_CONFIRM=1 --env PATH=/usr/local/bin:/root/.local/bin:$HERMES_HOME/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 depend() {
   need net
 }

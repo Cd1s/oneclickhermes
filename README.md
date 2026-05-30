@@ -92,5 +92,6 @@ selected `MODEL_KEY_ENV`, the installer reuses that existing key without
 printing it.
 By default, `HERMES_FULL_PERMISSIONS=1` writes `approvals.mode: off`,
 `command_allowlist: ['*']`, `hooks_auto_accept: true`,
-`delegation.subagent_auto_approve: true`, `HERMES_YOLO_MODE=1`,
-`HERMES_ACCEPT_HOOKS=1`, and marks WebUI onboarding completed.
+`delegation.subagent_auto_approve: true`, `browser.dialog_policy: auto_accept`,
+`HERMES_YOLO_MODE=1`, `HERMES_ACCEPT_HOOKS=1`, `HERMES_TUI_NO_CONFIRM=1`,
+and marks WebUI onboarding completed.
