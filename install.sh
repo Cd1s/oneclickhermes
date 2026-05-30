@@ -61,11 +61,11 @@ install_packages() {
     export NEEDRESTART_MODE=a
     apt-get update
     apt-get install -y \
-      bash ca-certificates curl git jq openssl procps python3 python3-pip \
+      bash ca-certificates curl git iproute2 jq openssl procps python3 python3-pip \
       python3-venv build-essential pkg-config libffi-dev
   else
     apk add --no-cache \
-      bash build-base ca-certificates cargo curl ffmpeg git jq libffi-dev \
+      bash build-base ca-certificates cargo curl ffmpeg git iproute2 jq libffi-dev \
       linux-headers nodejs npm openssl openssl-dev procps py3-pip \
       py3-virtualenv python3 ripgrep rust
   fi
