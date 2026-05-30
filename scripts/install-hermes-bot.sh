@@ -47,6 +47,13 @@ ensure_expected_host() {
   fi
 }
 
+ensure_basic_dns() {
+  if [ ! -s /etc/resolv.conf ] || ! grep -q '^nameserver ' /etc/resolv.conf 2>/dev/null; then
+    log "Writing fallback DNS resolvers to /etc/resolv.conf"
+    printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
+  fi
+}
+
 install_packages() {
   log "Installing OS packages for $OS_FAMILY"
   if [ "$OS_FAMILY" = "debian" ]; then
@@ -59,8 +66,8 @@ install_packages() {
   else
     apk add --no-cache \
       bash build-base ca-certificates cargo curl ffmpeg git jq libffi-dev \
-      linux-headers openssl openssl-dev procps py3-pip py3-virtualenv \
-      python3 ripgrep rust
+      linux-headers nodejs npm openssl openssl-dev procps py3-pip \
+      py3-virtualenv python3 ripgrep rust
   fi
 }
 
@@ -99,7 +106,9 @@ random_secret() {
   if command -v openssl >/dev/null 2>&1; then
     openssl rand -base64 36 | tr -d '\n'
   else
+    set +o pipefail
     tr -dc 'A-Za-z0-9' </dev/urandom | head -c 36
+    set -o pipefail
   fi
 }
 
@@ -744,8 +753,9 @@ main() {
   need_root
   detect_platform
   ensure_expected_host
-  normalize_inputs
+  ensure_basic_dns
   install_packages
+  normalize_inputs
   install_hermes_agent
   write_hermes_env
   write_hermes_config
