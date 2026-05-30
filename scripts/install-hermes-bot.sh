@@ -223,15 +223,22 @@ normalize_inputs() {
     GENERATED_WEBUI_PASSWORD=1
   fi
 
-  if is_true "$ENABLE_API_SERVER" && [ "$API_SERVER_HOST" != "127.0.0.1" ] && [ "$API_SERVER_HOST" != "localhost" ]; then
-    die "API server is only allowed on loopback by this installer; use API_SERVER_HOST=127.0.0.1"
+  if is_true "$ENABLE_API_SERVER"; then
+    if [ "$API_SERVER_HOST" != "127.0.0.1" ] && [ "$API_SERVER_HOST" != "localhost" ]; then
+      die "API server is only allowed on loopback by this installer; use API_SERVER_HOST=127.0.0.1"
+    fi
+  else
+    unset API_SERVER_HOST API_SERVER_PORT API_SERVER_KEY
   fi
 
   export HERMES_HOME HERMES_AGENT_REF HERMES_FULL_PERMISSIONS TERMINAL_CWD
   export DEPLOY_TG TELEGRAM_BOT_TOKEN TELEGRAM_ALLOWED_USERS
   export WEBUI_REPO WEBUI_REF WEBUI_DIR WEBUI_HOST WEBUI_PORT WEBUI_SERVICE_NAME WEBUI_AUTH WEBUI_PASSWORD
   export MODEL_PROVIDER MODEL_BASE_URL MODEL_API_MODE MODEL_DEFAULT MODEL_SPECS MODEL_KEY_ENV MODEL_API_KEY MODEL_NO_AUTH
-  export ENABLE_API_SERVER API_SERVER_HOST API_SERVER_PORT API_SERVER_KEY
+  export ENABLE_API_SERVER
+  if is_true "$ENABLE_API_SERVER"; then
+    export API_SERVER_HOST API_SERVER_PORT API_SERVER_KEY
+  fi
 }
 
 install_hermes_agent() {
