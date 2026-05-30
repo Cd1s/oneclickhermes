@@ -1,172 +1,87 @@
-# Hermes Model Skills
+# OneClickHermes
 
-This repository contains Hermes Agent skills for configuring model providers.
+One-click installer for a fresh Hermes Agent server with optional Telegram gateway
+and the community Hermes WebUI:
 
-## Included Skill
+- Hermes Agent from official `NousResearch/hermes-agent` main installer
+- Custom model provider written to `~/.hermes/config.yaml`
+- Secrets written only to `~/.hermes/.env` with mode `600`
+- Optional Telegram bot gateway
+- `https://github.com/nesquena/hermes-webui` as a service
+- Alpine OpenRC and Debian/Ubuntu/Proxmox systemd support
+- Hermes API Server disabled by default
 
-### `hermes-model-config`
-
-Use this skill when configuring a Hermes Agent custom model from user-provided
-values such as:
-
-- provider name
-- `base_url`
-- `api_key` or `key_env`
-- `api_mode`
-- model id
-- context length
-- max output tokens
-- compression threshold
-- auxiliary compression provider/model
-
-The skill includes deterministic helper scripts for merging into
-`~/.hermes/config.yaml`, validating the YAML shape, backing up local config, and
-restoring after live tests.
-
-## Install On Another Machine
-
-Clone the repository:
+## Quick Start
 
 ```bash
-git clone https://github.com/Cd1s/hermes-model.git
-cd hermes-model
-```
-
-Install the skill into the local Hermes skills directory:
-
-```bash
-mkdir -p ~/.hermes/skills
-cp -a hermes-model-config ~/.hermes/skills/hermes-model-config
-```
-
-For development, use a symlink instead of copying:
-
-```bash
-mkdir -p ~/.hermes/skills
-ln -sfn "$(pwd)/hermes-model-config" ~/.hermes/skills/hermes-model-config
-```
-
-## Verify Installation
-
-Check that the skill file exists:
-
-```bash
-test -f ~/.hermes/skills/hermes-model-config/SKILL.md
-```
-
-Validate the helper scripts:
-
-```bash
-python3 ~/.hermes/skills/hermes-model-config/scripts/validate_config.py --config ~/.hermes/config.yaml
-bash -n ~/.hermes/skills/hermes-model-config/scripts/backup_restore.sh
-```
-
-If Hermes Agent is already running, start a new session so the skills list is
-reloaded.
-
-## Usage Prompt
-
-After installation, ask Hermes Agent something like:
-
-```text
-Use the hermes-model-config skill to add a custom model provider.
-provider name: myprovider
-base_url: https://api.example.com/v1
-api_mode: codex_responses
-default model: main-model
-model: main-model:200000:64000
-auth: key_env MYPROVIDER_API_KEY
-compression threshold: 0.875
-```
-
-Put real API keys in `~/.hermes/.env`, not in `config.yaml`:
-
-```bash
-printf '%s\n' 'MYPROVIDER_API_KEY=replace-with-real-key' >> ~/.hermes/.env
-```
-
-## Manual Script Usage
-
-The skill can also be used directly from this repository:
-
-```bash
-cd hermes-model/hermes-model-config
-bash scripts/backup_restore.sh backup before-model-change
-python3 scripts/merge_config.py \
-  --provider-name myprovider \
-  --base-url https://api.example.com/v1 \
-  --api-mode codex_responses \
-  --default-model main-model \
-  --model main-model:200000:64000 \
-  --key-env MYPROVIDER_API_KEY \
-  --set-default \
-  --max-tokens 64000
-python3 scripts/validate_config.py --config ~/.hermes/config.yaml
-hermes config check
-```
-
-Rollback if needed:
-
-```bash
-bash scripts/backup_restore.sh restore before-model-change
-bash scripts/backup_restore.sh verify before-model-change
-```
-
-## One-Click Hermes Bot Install
-
-`scripts/install-hermes-bot.sh` installs a new Hermes Agent bot on either:
-
-- Debian / Ubuntu / Proxmox VE hosts using `systemd`
-- Alpine VPS / VM guests using `OpenRC`
-
-It installs Hermes Agent from the official `NousResearch/hermes-agent` `main`
-installer, configures a custom model provider, optionally enables Telegram,
-installs `https://github.com/nesquena/hermes-webui`, and starts the WebUI on the
-host/port you choose. By default it does **not** enable the Hermes API Server,
-because `nesquena/hermes-webui` runs through its own in-process Hermes runtime.
-
-Example:
-
-```bash
-chmod +x scripts/install-hermes-bot.sh
+curl -fsSL https://raw.githubusercontent.com/Cd1s/oneclickhermes/main/install.sh -o install.sh
+chmod +x install.sh
 
 NONINTERACTIVE=1 \
-DEPLOY_TG=1 \
-TELEGRAM_BOT_TOKEN='123456:replace-me' \
-TELEGRAM_ALLOWED_USERS='8699304813' \
-WEBUI_HOST='127.0.0.1' \
-WEBUI_PORT='8787' \
-WEBUI_PASSWORD='change-this-password' \
+DEPLOY_TG=0 \
+WEBUI_HOST='0.0.0.0' \
+WEBUI_PORT='8080' \
+WEBUI_PASSWORD='' \
 MODEL_PROVIDER='localopenai' \
 MODEL_BASE_URL='https://ai.example.com/v1' \
 MODEL_API_MODE='codex_responses' \
 MODEL_KEY_ENV='OPENAI_API_KEY' \
 MODEL_API_KEY='sk-replace-me' \
 MODEL_DEFAULT='gpt-5.5' \
-MODEL_SPECS='gpt-5.5:400000:32000,gpt-5.4:1000000:32000' \
-bash scripts/install-hermes-bot.sh
+MODEL_SPECS='gpt-5.5:400000:32000' \
+bash install.sh
 ```
 
-Useful variables:
+If `WEBUI_PASSWORD` is empty, a random password is generated and printed once at
+the end of the install.
 
-- `DEPLOY_TG=1` enables Telegram gateway service.
-- `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_USERS` configure Telegram access.
-- `WEBUI_HOST` and `WEBUI_PORT` control the WebUI listener for your own reverse proxy.
-- `WEBUI_PASSWORD` sets WebUI password auth; omitted means a random password is generated and printed once.
-- `MODEL_PROVIDER`, `MODEL_BASE_URL`, `MODEL_API_MODE`, `MODEL_KEY_ENV`, `MODEL_API_KEY`, `MODEL_DEFAULT`, and `MODEL_SPECS` configure the model.
-- `HERMES_FULL_PERMISSIONS=1` is the default and sets `approvals.mode: off`, hook auto-accept, subagent auto-approve, and command allowlist `*`.
-- `WEBUI_REF` defaults to `master`, matching `nesquena/hermes-webui` at the time this script was written.
-- `ENABLE_API_SERVER=1` is optional and loopback-only; leave it unset for `nesquena/hermes-webui`.
+## Telegram
 
-The script writes secrets only to `~/.hermes/.env` with mode `600`, and backs up
-existing `.env` / `config.yaml` before modifying them.
+```bash
+NONINTERACTIVE=1 \
+DEPLOY_TG=1 \
+TELEGRAM_BOT_TOKEN='123456:replace-me' \
+TELEGRAM_ALLOWED_USERS='8699304813' \
+WEBUI_HOST='0.0.0.0' \
+WEBUI_PORT='8080' \
+MODEL_PROVIDER='localopenai' \
+MODEL_BASE_URL='https://ai.example.com/v1' \
+MODEL_API_MODE='codex_responses' \
+MODEL_KEY_ENV='OPENAI_API_KEY' \
+MODEL_API_KEY='sk-replace-me' \
+MODEL_DEFAULT='gpt-5.5' \
+MODEL_SPECS='gpt-5.5:400000:32000' \
+bash install.sh
+```
 
-## Safety Notes
+## Main Variables
 
-- Do not commit real API keys, tokens, auth files, state databases, sessions, or
-  local backups.
-- `merge_config.py` inserts or replaces one `custom_providers` entry by name; it
-  does not overwrite the whole Hermes config.
-- Use `key_env` for hosted providers and store the secret in `~/.hermes/.env`.
-- Existing Hermes sessions may need `/new` or a gateway restart before model
-  changes are used.
+| Variable | Default | Meaning |
+|---|---:|---|
+| `DEPLOY_TG` | `0` | Enable Telegram gateway service |
+| `TELEGRAM_BOT_TOKEN` | empty | Telegram bot token |
+| `TELEGRAM_ALLOWED_USERS` | empty | Comma-separated Telegram user IDs |
+| `WEBUI_REPO` | `https://github.com/nesquena/hermes-webui.git` | WebUI repository |
+| `WEBUI_REF` | `master` | WebUI branch/ref |
+| `WEBUI_HOST` | `127.0.0.1` | WebUI bind address |
+| `WEBUI_PORT` | `8787` | WebUI bind port |
+| `WEBUI_PASSWORD` | generated | WebUI password |
+| `MODEL_PROVIDER` | `localopenai` | Hermes custom provider name |
+| `MODEL_BASE_URL` | required | OpenAI-compatible base URL, usually ending in `/v1` |
+| `MODEL_API_MODE` | `codex_responses` | `chat_completions`, `codex_responses`, or `anthropic_messages` |
+| `MODEL_KEY_ENV` | `OPENAI_API_KEY` | Env var name stored in `.env` |
+| `MODEL_API_KEY` | required unless `MODEL_NO_AUTH=1` | Model API key |
+| `MODEL_DEFAULT` | required | Default model ID |
+| `MODEL_SPECS` | required | `model:context_length:max_output_tokens`, comma-separated |
+| `HERMES_FULL_PERMISSIONS` | `1` | Disable approval prompts and enable broad tool access |
+| `ENABLE_API_SERVER` | `0` | Optional, loopback-only if enabled |
+| `RUN_CHAT_TEST` | `0` | Run `hermes chat -q` smoke test after install |
+
+## Notes
+
+`nesquena/hermes-webui` runs through its own in-process Hermes runtime by default,
+so this installer does not enable Hermes API Server. If you opt into
+`ENABLE_API_SERVER=1`, the script refuses non-loopback API server bind addresses.
+
+The installer backs up existing `~/.hermes/.env` and `~/.hermes/config.yaml`
+before modifying them.
