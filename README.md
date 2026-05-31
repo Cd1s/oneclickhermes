@@ -26,8 +26,8 @@ MODEL_BASE_URL='https://ai.example.com/v1' \
 MODEL_API_MODE='codex_responses' \
 MODEL_KEY_ENV='OPENAI_API_KEY' \
 MODEL_API_KEY='sk-replace-me' \
-MODEL_DEFAULT='gpt-5.5' \
-MODEL_SPECS='gpt-5.5:400000:32000' \
+MODEL_DEFAULT='gpt-5.4-mini' \
+MODEL_SPECS='gpt-5.4-mini:400000:32000,gpt-5.5:400000:32000,gpt-5.4:1000000:32000,gpt-5.3-codex:400000:32000,gpt-5.3-codex-spark:131072:32000,gpt-image-2:400000:32000' \
 bash install.sh
 ```
 
@@ -51,8 +51,8 @@ MODEL_BASE_URL='https://ai.example.com/v1' \
 MODEL_API_MODE='codex_responses' \
 MODEL_KEY_ENV='OPENAI_API_KEY' \
 MODEL_API_KEY='sk-replace-me' \
-MODEL_DEFAULT='gpt-5.5' \
-MODEL_SPECS='gpt-5.5:400000:32000' \
+MODEL_DEFAULT='gpt-5.4-mini' \
+MODEL_SPECS='gpt-5.4-mini:400000:32000,gpt-5.5:400000:32000,gpt-5.4:1000000:32000,gpt-5.3-codex:400000:32000,gpt-5.3-codex-spark:131072:32000,gpt-image-2:400000:32000' \
 bash install.sh
 ```
 
