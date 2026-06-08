@@ -556,20 +556,48 @@ config_path.chmod(0o600)
 PY
 }
 
+resolve_webui_ref() {
+  WEBUI_RESOLVED_REF="$WEBUI_REF"
+  WEBUI_REF_KIND=""
+
+  if git ls-remote --exit-code --heads "$WEBUI_REPO" "$WEBUI_REF" >/dev/null 2>&1; then
+    WEBUI_REF_KIND="branch"
+    return 0
+  fi
+  if git ls-remote --exit-code --tags "$WEBUI_REPO" "$WEBUI_REF" >/dev/null 2>&1; then
+    WEBUI_REF_KIND="tag"
+    return 0
+  fi
+  if git ls-remote --exit-code --heads "$WEBUI_REPO" main >/dev/null 2>&1; then
+    WEBUI_RESOLVED_REF="main"
+    WEBUI_REF_KIND="branch"
+    return 0
+  fi
+  if git ls-remote --exit-code --heads "$WEBUI_REPO" master >/dev/null 2>&1; then
+    WEBUI_RESOLVED_REF="master"
+    WEBUI_REF_KIND="branch"
+    return 0
+  fi
+
+  die "WebUI ref '$WEBUI_REF' not found and no main/master fallback exists for $WEBUI_REPO"
+}
+
 install_webui_repo() {
   log "Installing Hermes WebUI from $WEBUI_REPO"
-  local ref="$WEBUI_REF"
-  if ! git ls-remote --exit-code --heads "$WEBUI_REPO" "$ref" >/dev/null 2>&1; then
-    if git ls-remote --exit-code --heads "$WEBUI_REPO" main >/dev/null 2>&1; then
-      ref="main"
-    else
-      die "WebUI ref '$WEBUI_REF' not found and no 'main' fallback exists for $WEBUI_REPO"
-    fi
-  fi
+  resolve_webui_ref
+  local ref="$WEBUI_RESOLVED_REF"
+  local ref_kind="$WEBUI_REF_KIND"
+  log "Using WebUI $ref_kind: $ref"
+
   if [ -d "$WEBUI_DIR/.git" ]; then
-    git -C "$WEBUI_DIR" fetch origin "$ref"
-    git -C "$WEBUI_DIR" checkout "$ref" || git -C "$WEBUI_DIR" checkout -B "$ref" "origin/$ref"
-    git -C "$WEBUI_DIR" pull --ff-only origin "$ref"
+    if [ "$ref_kind" = "tag" ]; then
+      git -C "$WEBUI_DIR" fetch origin "refs/tags/$ref:refs/tags/$ref"
+      git -C "$WEBUI_DIR" checkout -f "refs/tags/$ref"
+    else
+      git -C "$WEBUI_DIR" fetch origin "refs/heads/$ref:refs/remotes/origin/$ref"
+      git -C "$WEBUI_DIR" checkout -B "$ref" "origin/$ref"
+      git -C "$WEBUI_DIR" pull --ff-only origin "$ref"
+    fi
   else
     mkdir -p "$(dirname "$WEBUI_DIR")"
     git clone --depth 1 --branch "$ref" "$WEBUI_REPO" "$WEBUI_DIR"
